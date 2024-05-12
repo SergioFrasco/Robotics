@@ -1,0 +1,4 @@
+The PRM algorithm was likely chosen because the navigation environment is static with known obstacle rectangles, and the configuration space is relatively low-dimensional (2D). 
+PRM is well-suited for such scenarios as it can efficiently construct a roadmap of the free configuration space by sampling and connecting nodes, enabling multiple path planning queries within the same environment. 
+Additionally, PRM's simplicity, ease of implementation, and potential for probabilistic completeness and resolution optimality make it a suitable choice for this static navigation task. 
+While RRT may be more appropriate for dynamic environments, high-dimensional configuration spaces, or online path planning scenarios, the static and low-dimensional nature of the problem aligns better with the strengths of the PRM algorithm.
