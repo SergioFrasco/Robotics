@@ -13,35 +13,35 @@ class Vertex:
 def euclidean_distance(v1, v2):
     return math.sqrt((v1.x - v2.x)**2 + (v1.y - v2.y)**2)
 
-def check_obstacle_collision(vertex, obstacles, clearance=0.75):
-    for obstacle in obstacles:
-        if (obstacle[0][0] - clearance <= vertex.x <= obstacle[1][0] + clearance and
-            obstacle[0][1] - clearance <= vertex.y <= obstacle[1][1] + clearance):
+def check_obstacle_collision(vertex, matrix_map, clearance=0.75):
+    x, y = int(vertex.x), int(vertex.y)
+    if 0 <= x < len(matrix_map) and 0 <= y < len(matrix_map[0]):
+        if matrix_map[x][y] == 100:
             return True
     return False
 
-def check_edge_collision(v1, v2, obstacles, clearance=0.75):
+def check_edge_collision(v1, v2, matrix_map, clearance=0.75):
     dx = v2.x - v1.x
     dy = v2.y - v1.y
     steps = 10
     for i in range(steps + 1):
-        x = v1.x + dx * i / steps
-        y = v1.y + dy * i / steps
-        if check_obstacle_collision(Vertex((x, y)), obstacles, clearance):
+        x = int(v1.x + dx * i / steps)
+        y = int(v1.y + dy * i / steps)
+        if check_obstacle_collision(Vertex((x, y)), matrix_map, clearance):
             return True
     return False
 
-def prm(start, goal, obstacles, num_samples, neighborhood_size):
+def prm(start, goal, matrix_map, num_samples, neighborhood_size):
     vertices = [Vertex(start), Vertex(goal)]
     for _ in range(num_samples):
-        sample = Vertex((random.randint(0, 100), random.randint(0, 60)))
-        if not check_obstacle_collision(sample, obstacles):
+        sample = Vertex((random.randint(0, len(matrix_map)-1), random.randint(0, len(matrix_map[0])-1)))
+        if not check_obstacle_collision(sample, matrix_map):
             vertices.append(sample)
 
     for v1 in vertices:
         neighbors = sorted(vertices, key=lambda v: euclidean_distance(v1, v))[:neighborhood_size + 1]
         for v2 in neighbors:
-            if v2 != v1 and not check_edge_collision(v1, v2, obstacles):
+            if v2 != v1 and not check_edge_collision(v1, v2, matrix_map):
                 v1.neighbors.append(v2)
 
     start_vertex = vertices[0]
@@ -77,41 +77,33 @@ def a_star(start, goal, vertices):
 
     return None
 
-def visualize_path(start, goal, obstacles, path):
+def visualize_path(start, goal, matrix_map, path):
     fig, ax = plt.subplots()
 
-    for obstacle in obstacles:
-        ax.add_patch(plt.Rectangle(obstacle[0], obstacle[1][0] - obstacle[0][0], obstacle[1][1] - obstacle[0][1], color='red'))
+    # Display the matrix map
+    ax.imshow(matrix_map, cmap='gray', origin='lower')
 
-    ax.plot(start[0], start[1], 'go', markersize=10, label='Start')
-    ax.plot(goal[0], goal[1], 'bo', markersize=10, label='Target')
+    ax.plot(start[1], start[0], 'go', markersize=10, label='Start')
+    ax.plot(goal[1], goal[0], 'bo', markersize=10, label='Target')
 
     if path is not None:
-        path_x, path_y = zip(*path)
-        ax.plot(path_x, path_y, '-', linewidth=2, label='Path')
+        path_x, path_y = zip(*[(y, x) for x, y in path])
+        ax.plot(path_y, path_x, '-', linewidth=2, label='Path')
 
-    ax.set_xlim(0, 100)
-    ax.set_ylim(0, 100)
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
+    ax.set_xlabel('Y')
+    ax.set_ylabel('X')
     ax.set_title('PRM Path')
     ax.legend()
-    ax.grid(True)
-    plt.gca().set_aspect('equal', adjustable='box')
     plt.tight_layout()
     plt.show()
 
 def parse_input(input_str):
     lines = input_str.split('\n')
-    start = tuple(map(int, lines[0].split(';')[0].split(',')))
-    goal = tuple(map(int, lines[0].split(';')[1].split(',')))
-    obstacles = []
-    for line in lines[1:-1]:
-        coords = line.split(';')
-        p1 = tuple(map(int, coords[0].split(',')))
-        p2 = tuple(map(int, coords[1].split(',')))
-        obstacles.append((p1, p2))
-    return start, goal, obstacles
+    dimensions = tuple(map(int, lines[0].split(',')))
+    matrix_map = [list(map(int, line.split(','))) for line in lines[1:dimensions[0]+1]]
+    start = tuple(map(int, lines[dimensions[0]+1].split(',')))
+    goal = tuple(map(int, lines[dimensions[0]+2].split(',')))
+    return start, goal, matrix_map
 
 inp = input()
 input_str=''
